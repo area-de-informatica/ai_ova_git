@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Git Adventure - Aprende Git Jugando</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Courier New', monospace;
+        }
+
+        .game-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .terminal {
+            background: #1e1e1e;
+            color: #00ff00;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            min-height: 200px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .terminal-input {
+            background: transparent;
+            border: none;
+            color: #00ff00;
+            outline: none;
+            font-family: 'Courier New', monospace;
+        }
+
+        .terminal-input::placeholder {
+            color: #666;
+        }
+
+        .command-hint {
+            background: linear-gradient(45deg, #ffd89b 0%, #19547b 100%);
+            border-radius: 10px;
+            color: white;
+            padding: 15px;
+            margin: 10px 0;
+        }
+
+        .progress-custom {
+            height: 25px;
+            border-radius: 15px;
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .progress-bar-custom {
+            background: linear-gradient(45deg, #56ab2f, #a8e6cf);
+            border-radius: 15px;
+            transition: width 0.5s ease;
+        }
+
+        .level-badge {
+            background: linear-gradient(45deg, #ff6b6b, #feca57);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: bold;
+        }
+
+        .git-branch {
+            display: inline-block;
+            background: #28a745;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            margin: 2px;
+        }
+
+        .file-item {
+            background: rgba(0, 123, 255, 0.1);
+            border: 1px solid rgba(0, 123, 255, 0.3);
+            border-radius: 8px;
+            padding: 8px;
+            margin: 4px 0;
+            transition: all 0.3s ease;
+        }
+
+        .file-item:hover {
+            background: rgba(0, 123, 255, 0.2);
+            transform: translateX(5px);
+        }
+
+        .success-animation {
+            animation: bounce 0.6s ease-in-out;
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-10px); }
+            60% { transform: translateY(-5px); }
+        }
+
+        .command-button {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            border: none;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            margin: 2px;
+            transition: all 0.3s ease;
+        }
+
+        .command-button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid py-4">
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                <div class="game-container p-4">
+                    <!-- Header -->
+                    <div class="row mb-4">
+                        <div class="col-md-8">
+                            <h1 class="display-4 fw-bold text-primary">
+                                <i class="fab fa-git-alt"></i> Git Adventure
+                            </h1>
+                            <p class="lead">Aprende Git comandos jugando una aventura interactiva</p>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <div class="level-badge">
+                                <i class="fas fa-star"></i> Nivel <span id="currentLevel">1</span>
+                            </div>
+                            <div class="mt-2">
+                                <small class="text-muted">Progreso</small>
+                                <div class="progress progress-custom">
+                                    <div class="progress-bar progress-bar-custom" id="progressBar" style="width: 0%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <!-- Panel Principal del Juego -->
+                        <div class="col-lg-8">
+                            <!-- Historia/Misión Actual -->
+                            <div class="card mb-4 border-0 shadow">
+                                <div class="card-header bg-primary text-white">
+                                    <h5><i class="fas fa-scroll"></i> Misión Actual</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div id="missionText" class="mb-3">
+                                        ¡Bienvenido, desarrollador! Has sido contratado para trabajar en un proyecto importante. 
+                                        Tu primera tarea es inicializar un repositorio Git. ¿Podrás completar esta misión?
+                                    </div>
+                                    <div class="command-hint" id="commandHint">
+                                        💡 <strong>Pista:</strong> Para inicializar un repositorio Git, usa el comando <code>git init</code>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Terminal -->
+                            <div class="card border-0 shadow">
+                                <div class="card-header bg-dark text-white">
+                                    <h5><i class="fas fa-terminal"></i> Terminal Git</h5>
+                                </div>
+                                <div class="card-body p-0">
+                                    <div class="terminal p-3">
+                                        <div id="terminalOutput">
+                                            <div>$ Bienvenido al terminal Git Adventure</div>
+                                            <div>$ Escribe tus comandos Git aquí...</div>
+                                            <div>$ </div>
+                                        </div>
+                                        <div class="d-flex align-items-center">
+                                            <span class="me-2">$</span>
+                                            <input type="text" class="terminal-input flex-grow-1" id="commandInput" 
+                                                   placeholder="Escribe tu comando Git aquí..." autocomplete="off">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Comandos Rápidos -->
+                            <div class="mt-3">
+                                <small class="text-muted">Comandos rápidos:</small><br>
+                                <button class="command-button btn-sm" onclick="insertCommand('git init')">git init</button>
+                                <button class="command-button btn-sm" onclick="insertCommand('git add .')">git add .</button>
+                                <button class="command-button btn-sm" onclick="insertCommand('git commit -m')">git commit -m</button>
+                                <button class="command-button btn-sm" onclick="insertCommand('git status')">git status</button>
+                                <button class="command-button btn-sm" onclick="insertCommand('git log')">git log</button>
+                            </div>
+                        </div>
+
+                        <!-- Panel Lateral -->
+                        <div class="col-lg-4">
+                            <!-- Estado del Repositorio -->
+                            <div class="card mb-3 border-0 shadow">
+                                <div class="card-header bg-success text-white">
+                                    <h6><i class="fas fa-code-branch"></i> Estado del Repo</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-2">
+                                        <strong>Rama actual:</strong> 
+                                        <span class="git-branch" id="currentBranch">No inicializado</span>
+                                    </div>
+                                    <div class="mb-2">
+                                        <strong>Archivos:</strong>
+                                        <div id="filesList">
+                                            <small class="text-muted">No hay archivos aún</small>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <strong>Commits:</strong> <span id="commitCount">0</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Logros -->
+                            <div class="card border-0 shadow">
+                                <div class="card-header bg-warning text-white">
+                                    <h6><i class="fas fa-trophy"></i> Logros</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div id="achievements">
+                                        <small class="text-muted">Completa misiones para desbloquear logros</small>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Comandos Aprendidos -->
+                            <div class="card mt-3 border-0 shadow">
+                                <div class="card-header bg-info text-white">
+                                    <h6><i class="fas fa-book"></i> Comandos Aprendidos</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div id="learnedCommands">
+                                        <small class="text-muted">Los comandos que uses aparecerán aquí</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script>
+        class GitAdventureGame {
+            constructor() {
+                this.currentLevel = 1;
+                this.progress = 0;
+                this.repositoryInitialized = false;
+                this.currentBranch = 'main';
+                this.files = [];
+                this.commitCount = 0;
+                this.stagedFiles = [];
+                this.learnedCommands = new Set();
+                this.achievements = [];
+                
+                this.levels = [
+                    {
+                        id: 1,
+                        title: "Inicialización del Repositorio",
+                        mission: "¡Bienvenido, desarrollador! Has sido contratado para trabajar en un proyecto importante. Tu primera tarea es inicializar un repositorio Git. ¿Podrás completar esta misión?",
+                        hint: "Para inicializar un repositorio Git, usa el comando <code>git init</code>",
+                        requiredCommand: "git init",
+                        completionMessage: "¡Excelente! Has inicializado tu primer repositorio Git. Ahora eres oficialmente un desarrollador Git."
+                    },
+                    {
+                        id: 2,
+                        title: "Creando tu primer archivo",
+                        mission: "Ahora que tienes un repositorio, necesitas crear algunos archivos para tu proyecto. Primero, verifica el estado de tu repositorio.",
+                        hint: "Usa <code>git status</code> para ver el estado actual de tu repositorio",
+                        requiredCommand: "git status",
+                        completionMessage: "¡Perfecto! Ahora sabes cómo verificar el estado de tu repositorio."
+                    },
+                    {
+                        id: 3,
+                        title: "Agregando archivos al área de staging",
+                        mission: "Tienes algunos archivos nuevos en tu proyecto. Necesitas agregarlos al área de staging para prepararlos para el commit.",
+                        hint: "Usa <code>git add .</code> para agregar todos los archivos al área de staging",
+                        requiredCommand: "git add .",
+                        completionMessage: "¡Genial! Has agregado los archivos al área de staging. Están listos para el commit."
+                    },
+                    {
+                        id: 4,
+                        title: "Tu primer commit",
+                        mission: "Es hora de hacer tu primer commit. Esto guardará una instantánea de tu proyecto en el historial de Git.",
+                        hint: "Usa <code>git commit -m \"Tu mensaje aquí\"</code> para hacer un commit con mensaje",
+                        requiredCommand: "git commit -m",
+                        completionMessage: "¡Increíble! Has hecho tu primer commit. Tu código está ahora guardado en el historial de Git."
+                    },
+                    {
+                        id: 5,
+                        title: "Explorando el historial",
+                        mission: "Quieres ver el historial de commits de tu proyecto para entender qué cambios se han hecho.",
+                        hint: "Usa <code>git log</code> para ver el historial de commits",
+                        requiredCommand: "git log",
+                        completionMessage: "¡Excelente! Ahora sabes cómo explorar el historial de tu proyecto."
+                    }
+                ];
+                
+                this.commandDescriptions = {
+                    'git init': 'Inicializa un nuevo repositorio Git en el directorio actual',
+                    'git status': 'Muestra el estado actual del repositorio y archivos',
+                    'git add .': 'Agrega todos los archivos modificados al área de staging',
+                    'git commit -m': 'Crea un commit con un mensaje descriptivo',
+                    'git log': 'Muestra el historial de commits del repositorio'
+                };
+                
+                this.initializeGame();
+            }
+            
+            initializeGame() {
+                this.updateUI();
+                this.setupEventListeners();
+                this.simulateFiles();
+            }
+            
+            setupEventListeners() {
+                const commandInput = document.getElementById('commandInput');
+                commandInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        this.executeCommand(commandInput.value.trim());
+                        commandInput.value = '';
+                    }
+                });
+            }
+            
+            simulateFiles() {
+                // Simular algunos archivos en el proyecto
+                this.files = [
+                    { name: 'index.html', status: 'untracked' },
+                    { name: 'style.css', status: 'untracked' },
+                    { name: 'script.js', status: 'untracked' },
+                    { name: 'README.md', status: 'untracked' }
+                ];
+            }
+            
+            executeCommand(command) {
+                this.addToTerminal(`$ ${command}`);
+                
+                // Procesar el comando
+                const lowerCommand = command.toLowerCase();
+                
+                if (lowerCommand === 'git init') {
+                    this.handleGitInit();
+                } else if (lowerCommand === 'git status') {
+                    this.handleGitStatus();
+                } else if (lowerCommand === 'git add .') {
+                    this.handleGitAdd();
+                } else if (lowerCommand.startsWith('git commit -m')) {
+                    this.handleGitCommit(command);
+                } else if (lowerCommand === 'git log') {
+                    this.handleGitLog();
+                } else if (lowerCommand === 'help' || lowerCommand === 'ayuda') {
+                    this.showHelp();
+                } else {
+                    this.addToTerminal(`Comando no reconocido: ${command}. Escribe 'help' para ver comandos disponibles.`);
+                }
+                
+                this.addLearnedCommand(command);
+                this.checkLevelCompletion(command);
+            }
+            
+            handleGitInit() {
+                if (this.repositoryInitialized) {
+                    this.addToTerminal('El repositorio ya está inicializado.');
+                    return;
+                }
+                
+                this.repositoryInitialized = true;
+                this.currentBranch = 'main';
+                this.addToTerminal('Repositorio Git inicializado exitosamente.');
+                this.addToTerminal('Creado repositorio vacío en .git/');
+                this.updateUI();
+            }
+            
+            handleGitStatus() {
+                if (!this.repositoryInitialized) {
+                    this.addToTerminal('Error: no es un repositorio git (o ninguno de los directorios padre)');
+                    return;
+                }
+                
+                this.addToTerminal('En la rama main');
+                
+                const untrackedFiles = this.files.filter(f => f.status === 'untracked');
+                const stagedFiles = this.files.filter(f => f.status === 'staged');
+                
+                if (stagedFiles.length > 0) {
+                    this.addToTerminal('\nCambios a ser confirmados:');
+                    stagedFiles.forEach(file => {
+                        this.addToTerminal(`  nuevo archivo: ${file.name}`, 'success');
+                    });
+                }
+                
+                if (untrackedFiles.length > 0) {
+                    this.addToTerminal('\nArchivos sin seguimiento:');
+                    untrackedFiles.forEach(file => {
+                        this.addToTerminal(`  ${file.name}`, 'warning');
+                    });
+                    this.addToTerminal('\n(usa "git add <archivo>..." para incluir en lo que se confirmará)');
+                }
+                
+                if (stagedFiles.length === 0 && untrackedFiles.length === 0) {
+                    this.addToTerminal('nada para confirmar, directorio de trabajo limpio');
+                }
+            }
+            
+            handleGitAdd() {
+                if (!this.repositoryInitialized) {
+                    this.addToTerminal('Error: no es un repositorio git');
+                    return;
+                }
+                
+                const untrackedFiles = this.files.filter(f => f.status === 'untracked');
+                if (untrackedFiles.length === 0) {
+                    this.addToTerminal('No hay archivos para agregar.');
+                    return;
+                }
+                
+                this.files.forEach(file => {
+                    if (file.status === 'untracked') {
+                        file.status = 'staged';
+                    }
+                });
+                
+                this.addToTerminal(`Agregados ${untrackedFiles.length} archivos al área de staging.`);
+                this.updateUI();
+            }
+            
+            handleGitCommit(command) {
+                if (!this.repositoryInitialized) {
+                    this.addToTerminal('Error: no es un repositorio git');
+                    return;
+                }
+                
+                const stagedFiles = this.files.filter(f => f.status === 'staged');
+                if (stagedFiles.length === 0) {
+                    this.addToTerminal('No hay cambios agregados para confirmar.');
+                    return;
+                }
+                
+                // Extraer mensaje del commit
+                const messageMatch = command.match(/-m\s+"([^"]+)"|'([^']+)'|\s+(\S+.*)/);
+                const message = messageMatch ? (messageMatch[1] || messageMatch[2] || messageMatch[3] || 'Initial commit') : 'Initial commit';
+                
+                this.files.forEach(file => {
+                    if (file.status === 'staged') {
+                        file.status = 'committed';
+                    }
+                });
+                
+                this.commitCount++;
+                this.addToTerminal(`[main ${this.generateCommitHash()}] ${message}`);
+                this.addToTerminal(`${stagedFiles.length} archivos cambiados`);
+                this.updateUI();
+            }
+            
+            handleGitLog() {
+                if (!this.repositoryInitialized) {
+                    this.addToTerminal('Error: no es un repositorio git');
+                    return;
+                }
+                
+                if (this.commitCount === 0) {
+                    this.addToTerminal('No hay commits aún.');
+                    return;
+                }
+                
+                this.addToTerminal(`commit ${this.generateCommitHash()}`);
+                this.addToTerminal('Author: Git Adventure Player <player@gitadventure.com>');
+                this.addToTerminal(`Date: ${new Date().toLocaleDateString()}`);
+                this.addToTerminal('\n    Initial commit - Proyecto Git Adventure iniciado\n');
+            }
+            
+            showHelp() {
+                this.addToTerminal('=== COMANDOS DISPONIBLES ===');
+                Object.entries(this.commandDescriptions).forEach(([cmd, desc]) => {
+                    this.addToTerminal(`${cmd.padEnd(15)} - ${desc}`);
+                });
+                this.addToTerminal('help                - Muestra esta ayuda');
+            }
+            
+            generateCommitHash() {
+                return Math.random().toString(36).substr(2, 7);
+            }
+            
+            addToTerminal(text, type = 'normal') {
+                const output = document.getElementById('terminalOutput');
+                const div = document.createElement('div');
+                
+                if (type === 'success') {
+                    div.style.color = '#28a745';
+                } else if (type === 'warning') {
+                    div.style.color = '#ffc107';
+                } else if (type === 'error') {
+                    div.style.color = '#dc3545';
+                }
+                
+                div.textContent = text;
+                output.appendChild(div);
+                
+                // Scroll to bottom
+                output.scrollTop = output.scrollHeight;
+            }
+            
+            addLearnedCommand(command) {
+                const baseCommand = command.split(' ').slice(0, 2).join(' ');
+                if (this.commandDescriptions[baseCommand]) {
+                    this.learnedCommands.add(baseCommand);
+                    this.updateLearnedCommands();
+                }
+            }
+            
+            updateLearnedCommands() {
+                const container = document.getElementById('learnedCommands');
+                if (this.learnedCommands.size === 0) {
+                    container.innerHTML = '<small class="text-muted">Los comandos que uses aparecerán aquí</small>';
+                    return;
+                }
+                
+                container.innerHTML = '';
+                this.learnedCommands.forEach(cmd => {
+                    const div = document.createElement('div');
+                    div.className = 'mb-2 p-2 bg-light rounded';
+                    div.innerHTML = `<strong>${cmd}</strong><br><small>${this.commandDescriptions[cmd]}</small>`;
+                    container.appendChild(div);
+                });
+            }
+            
+            checkLevelCompletion(command) {
+                const currentLevelData = this.levels[this.currentLevel - 1];
+                if (!currentLevelData) return;
+                
+                const baseCommand = command.toLowerCase().split(' ').slice(0, 2).join(' ');
+                const requiredCommand = currentLevelData.requiredCommand.toLowerCase();
+                
+                if (baseCommand === requiredCommand || command.toLowerCase().startsWith(requiredCommand)) {
+                    this.completeLevel();
+                }
+            }
+            
+            completeLevel() {
+                const currentLevelData = this.levels[this.currentLevel - 1];
+                
+                // Mostrar mensaje de completación
+                this.addToTerminal(`\n🎉 ¡NIVEL COMPLETADO! 🎉`, 'success');
+                this.addToTerminal(currentLevelData.completionMessage, 'success');
+                
+                // Agregar logro
+                this.achievements.push({
+                    title: currentLevelData.title,
+                    description: `Completaste: ${currentLevelData.title}`
+                });
+                
+                // Avanzar al siguiente nivel
+                this.currentLevel++;
+                this.progress = ((this.currentLevel - 1) / this.levels.length) * 100;
+                
+                setTimeout(() => {
+                    this.nextLevel();
+                }, 2000);
+            }
+            
+            nextLevel() {
+                if (this.currentLevel > this.levels.length) {
+                    this.gameCompleted();
+                    return;
+                }
+                
+                const nextLevelData = this.levels[this.currentLevel - 1];
+                document.getElementById('missionText').textContent = nextLevelData.mission;
+                document.getElementById('commandHint').innerHTML = `💡 <strong>Pista:</strong> ${nextLevelData.hint}`;
+                
+                this.addToTerminal(`\n--- NIVEL ${this.currentLevel}: ${nextLevelData.title} ---`);
+                this.updateUI();
+            }
+            
+            gameCompleted() {
+                document.getElementById('missionText').innerHTML = `
+                    <div class="text-center">
+                        <h2>🎊 ¡FELICITACIONES! 🎊</h2>
+                        <p>Has completado Git Adventure y aprendido los comandos básicos de Git.</p>
+                        <p>¡Ahora estás listo para usar Git en proyectos reales!</p>
+                    </div>
+                `;
+                document.getElementById('commandHint').innerHTML = `
+                    <div class="text-center">
+                        <strong>🏆 ¡Eres un maestro de Git! 🏆</strong><br>
+                        Continúa practicando con repositorios reales.
+                    </div>
+                `;
+                
+                this.addToTerminal('\n🎊 ¡JUEGO COMPLETADO! 🎊', 'success');
+                this.addToTerminal('¡Felicitaciones por aprender Git!', 'success');
+            }
+            
+            updateUI() {
+                // Actualizar nivel y progreso
+                document.getElementById('currentLevel').textContent = this.currentLevel;
+                document.getElementById('progressBar').style.width = `${this.progress}%`;
+                
+                // Actualizar estado del repositorio
+                document.getElementById('currentBranch').textContent = this.repositoryInitialized ? this.currentBranch : 'No inicializado';
+                document.getElementById('commitCount').textContent = this.commitCount;
+                
+                // Actualizar lista de archivos
+                this.updateFilesList();
+                
+                // Actualizar logros
+                this.updateAchievements();
+            }
+            
+            updateFilesList() {
+                const container = document.getElementById('filesList');
+                if (this.files.length === 0) {
+                    container.innerHTML = '<small class="text-muted">No hay archivos aún</small>';
+                    return;
+                }
+                
+                container.innerHTML = '';
+                this.files.forEach(file => {
+                    const div = document.createElement('div');
+                    div.className = 'file-item';
+                    
+                    let statusColor = '';
+                    let statusText = '';
+                    
+                    switch (file.status) {
+                        case 'untracked':
+                            statusColor = 'text-warning';
+                            statusText = 'Sin seguimiento';
+                            break;
+                        case 'staged':
+                            statusColor = 'text-primary';
+                            statusText = 'En staging';
+                            break;
+                        case 'committed':
+                            statusColor = 'text-success';
+                            statusText = 'Confirmado';
+                            break;
+                    }
+                    
+                    div.innerHTML = `
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span><i class="fas fa-file-code"></i> ${file.name}</span>
+                            <small class="${statusColor}">${statusText}</small>
+                        </div>
+                    `;
+                    
+                    container.appendChild(div);
+                });
+            }
+            
+            updateAchievements() {
+                const container = document.getElementById('achievements');
+                if (this.achievements.length === 0) {
+                    container.innerHTML = '<small class="text-muted">Completa misiones para desbloquear logros</small>';
+                    return;
+                }
+                
+                container.innerHTML = '';
+                this.achievements.forEach((achievement, index) => {
+                    const div = document.createElement('div');
+                    div.className = 'mb-2 p-2 bg-warning bg-opacity-10 rounded success-animation';
+                    div.innerHTML = `
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-trophy text-warning me-2"></i>
+                            <div>
+                                <strong>${achievement.title}</strong><br>
+                                <small>${achievement.description}</small>
+                            </div>
+                        </div>
+                    `;
+                    container.appendChild(div);
+                });
+            }
+        }
+        
+        // Función para insertar comandos rápidos
+        function insertCommand(command) {
+            document.getElementById('commandInput').value = command;
+            document.getElementById('commandInput').focus();
+        }
+        
+        // Inicializar el juego cuando se carga la página
+        document.addEventListener('DOMContentLoaded', () => {
+            window.gitGame = new GitAdventureGame();
+        });
+    </script>
+</body>
+</html>

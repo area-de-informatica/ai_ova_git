@@ -1,0 +1,978 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Git Adventure Nivel 2 - Branching & Colaboración</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Courier New', monospace;
+        }
+
+        .game-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .terminal {
+            background: #1e1e1e;
+            color: #00ff00;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            min-height: 250px;
+            max-height: 350px;
+            overflow-y: auto;
+        }
+
+        .terminal-input {
+            background: transparent;
+            border: none;
+            color: #00ff00;
+            outline: none;
+            font-family: 'Courier New', monospace;
+        }
+
+        .command-hint {
+            background: linear-gradient(45deg, #ff9a9e 0%, #fecfef 50%, #fecfef 100%);
+            border-radius: 10px;
+            color: #333;
+            padding: 15px;
+            margin: 10px 0;
+        }
+
+        .progress-custom {
+            height: 25px;
+            border-radius: 15px;
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .progress-bar-custom {
+            background: linear-gradient(45deg, #56ab2f, #a8e6cf);
+            border-radius: 15px;
+            transition: width 0.5s ease;
+        }
+
+        .level-badge {
+            background: linear-gradient(45deg, #ff6b6b, #feca57);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: bold;
+        }
+
+        .git-branch {
+            display: inline-block;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            margin: 2px;
+            font-weight: bold;
+        }
+
+        .branch-main { background: #28a745; }
+        .branch-feature { background: #007bff; }
+        .branch-hotfix { background: #dc3545; }
+        .branch-develop { background: #6f42c1; }
+
+        .file-item {
+            background: rgba(0, 123, 255, 0.1);
+            border: 1px solid rgba(0, 123, 255, 0.3);
+            border-radius: 8px;
+            padding: 8px;
+            margin: 4px 0;
+            transition: all 0.3s ease;
+        }
+
+        .file-item:hover {
+            background: rgba(0, 123, 255, 0.2);
+            transform: translateX(5px);
+        }
+
+        .success-animation {
+            animation: bounce 0.6s ease-in-out;
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-10px); }
+            60% { transform: translateY(-5px); }
+        }
+
+        .command-button {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            border: none;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            margin: 2px;
+            transition: all 0.3s ease;
+            font-size: 0.8em;
+        }
+
+        .command-button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .branch-tree {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+            font-family: monospace;
+            font-size: 0.9em;
+        }
+
+        .conflict-file {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 8px;
+            padding: 10px;
+            margin: 5px 0;
+        }
+
+        .collaboration-panel {
+            background: linear-gradient(45deg, #a8edea 0%, #fed6e3 100%);
+            border-radius: 10px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+
+        .commit-graph {
+            background: #2d3748;
+            color: white;
+            border-radius: 8px;
+            padding: 10px;
+            font-family: monospace;
+            font-size: 0.8em;
+        }
+
+        .difficulty-indicator {
+            background: linear-gradient(45deg, #ff512f, #dd2476);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 0.75em;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid py-4">
+        <div class="row justify-content-center">
+            <div class="col-lg-12">
+                <div class="game-container p-4">
+                    <!-- Header -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <h1 class="display-4 fw-bold text-primary">
+                                <i class="fab fa-git-alt"></i> Git Adventure Nivel 2
+                            </h1>
+                            <p class="lead">Branching, Merging y Colaboración Avanzada</p>
+                            <span class="difficulty-indicator">
+                                <i class="fas fa-fire"></i> NIVEL INTERMEDIO
+                            </span>
+                        </div>
+                        <div class="col-md-6 text-end">
+                            <div class="level-badge">
+                                <i class="fas fa-code-branch"></i> Nivel <span id="currentLevel">1</span>/8
+                            </div>
+                            <div class="mt-2">
+                                <small class="text-muted">Progreso Nivel 2</small>
+                                <div class="progress progress-custom">
+                                    <div class="progress-bar progress-bar-custom" id="progressBar" style="width: 0%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <!-- Panel Principal del Juego -->
+                        <div class="col-lg-8">
+                            <!-- Historia/Misión Actual -->
+                            <div class="card mb-4 border-0 shadow">
+                                <div class="card-header bg-primary text-white">
+                                    <h5><i class="fas fa-rocket"></i> Misión Actual</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div id="missionText" class="mb-3">
+                                        ¡Bienvenido al equipo de desarrollo avanzado! Tu proyecto ha crecido y ahora necesitas trabajar con múltiples características simultáneamente. Tu primera misión es crear una nueva rama para desarrollar una nueva funcionalidad sin afectar el código principal.
+                                    </div>
+                                    <div class="command-hint" id="commandHint">
+                                        💡 <strong>Pista:</strong> Para crear y cambiar a una nueva rama, usa <code>git checkout -b nombre-rama</code> o <code>git branch nombre-rama</code> seguido de <code>git checkout nombre-rama</code>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Terminal -->
+                            <div class="card border-0 shadow">
+                                <div class="card-header bg-dark text-white">
+                                    <h5><i class="fas fa-terminal"></i> Terminal Git Avanzado</h5>
+                                </div>
+                                <div class="card-body p-0">
+                                    <div class="terminal p-3">
+                                        <div id="terminalOutput">
+                                            <div>$ Git Adventure Nivel 2 - Branching & Colaboración</div>
+                                            <div>$ Tu repositorio ya está inicializado con algunos commits</div>
+                                            <div>$ Estado actual: Rama main con 3 commits</div>
+                                            <div>$ </div>
+                                        </div>
+                                        <div class="d-flex align-items-center">
+                                            <span class="me-2">$</span>
+                                            <input type="text" class="terminal-input flex-grow-1" id="commandInput" 
+                                                   placeholder="Escribe tu comando Git aquí..." autocomplete="off">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Comandos Rápidos Nivel 2 -->
+                            <div class="mt-3">
+                                <small class="text-muted">Comandos Nivel 2:</small><br>
+                                <button class="command-button btn-sm" onclick="insertCommand('git branch')">git branch</button>
+                                <button class="command-button btn-sm" onclick="insertCommand('git checkout -b')">git checkout -b</button>
+                                <button class="command-button btn-sm" onclick="insertCommand('git merge')">git merge</button>
+                                <button class="command-button btn-sm" onclick="insertCommand('git push origin')">git push</button>
+                                <button class="command-button btn-sm" onclick="insertCommand('git pull')">git pull</button>
+                                <button class="command-button btn-sm" onclick="insertCommand('git stash')">git stash</button>
+                                <button class="command-button btn-sm" onclick="insertCommand('git rebase')">git rebase</button>
+                            </div>
+                        </div>
+
+                        <!-- Panel Lateral -->
+                        <div class="col-lg-4">
+                            <!-- Estado del Repositorio -->
+                            <div class="card mb-3 border-0 shadow">
+                                <div class="card-header bg-success text-white">
+                                    <h6><i class="fas fa-code-branch"></i> Estado del Repositorio</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-2">
+                                        <strong>Rama actual:</strong> 
+                                        <span class="git-branch branch-main" id="currentBranch">main</span>
+                                    </div>
+                                    <div class="mb-2">
+                                        <strong>Ramas disponibles:</strong>
+                                        <div id="branchesList">
+                                            <span class="git-branch branch-main">main</span>
+                                        </div>
+                                    </div>
+                                    <div class="mb-2">
+                                        <strong>Commits:</strong> <span id="commitCount">3</span>
+                                    </div>
+                                    <div>
+                                        <strong>Archivos modificados:</strong> <span id="modifiedFiles">0</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Árbol de Ramas -->
+                            <div class="card mb-3 border-0 shadow">
+                                <div class="card-header bg-info text-white">
+                                    <h6><i class="fas fa-project-diagram"></i> Árbol de Ramas</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="branch-tree" id="branchTree">
+                                        <div>* main</div>
+                                        <div>  ├── Initial commit</div>
+                                        <div>  ├── Add basic files</div>
+                                        <div>  └── Setup project structure</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Panel de Colaboración -->
+                            <div class="card mb-3 border-0 shadow">
+                                <div class="card-header bg-warning text-white">
+                                    <h6><i class="fas fa-users"></i> Colaboración</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="collaboration-panel">
+                                        <div id="collaborationStatus">
+                                            <strong>Repositorio Remoto:</strong> origin<br>
+                                            <strong>Estado:</strong> <span class="text-success">Sincronizado</span><br>
+                                            <strong>Contribuidores:</strong> 1
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Logros Nivel 2 -->
+                            <div class="card border-0 shadow">
+                                <div class="card-header" style="background: linear-gradient(45deg, #ff9a9e, #fecfef);">
+                                    <h6 class="text-white"><i class="fas fa-trophy"></i> Logros Nivel 2</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div id="achievements">
+                                        <small class="text-muted">Desbloquea logros de branching y colaboración</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sección de Conflictos (aparece cuando es necesario) -->
+                    <div class="row mt-4" id="conflictSection" style="display: none;">
+                        <div class="col-12">
+                            <div class="card border-warning">
+                                <div class="card-header bg-warning text-dark">
+                                    <h5><i class="fas fa-exclamation-triangle"></i> ¡Conflicto de Merge Detectado!</h5>
+                                </div>
+                                <div class="card-body">
+                                    <p>Se ha detectado un conflicto durante el merge. Necesitas resolverlo manualmente:</p>
+                                    <div id="conflictFiles"></div>
+                                    <button class="btn btn-success mt-2" onclick="resolveConflict()">
+                                        <i class="fas fa-check"></i> Resolver Conflicto
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script>
+        class GitAdventureLevel2 {
+            constructor() {
+                this.currentLevel = 1;
+                this.progress = 0;
+                this.currentBranch = 'main';
+                this.branches = ['main'];
+                this.commitCount = 3;
+                this.modifiedFiles = 0;
+                this.stashedChanges = [];
+                this.remoteSync = true;
+                this.hasConflict = false;
+                this.learnedCommands = new Set();
+                this.achievements = [];
+                
+                this.levels = [
+                    {
+                        id: 1,
+                        title: "Creando tu primera rama",
+                        mission: "¡Bienvenido al equipo de desarrollo avanzado! Tu proyecto ha crecido y ahora necesitas trabajar con múltiples características simultáneamente. Tu primera misión es crear una nueva rama para desarrollar una nueva funcionalidad sin afectar el código principal.",
+                        hint: "Para crear y cambiar a una nueva rama, usa <code>git checkout -b nombre-rama</code> o <code>git branch nombre-rama</code> seguido de <code>git checkout nombre-rama</code>",
+                        requiredCommands: ["git branch", "git checkout -b"],
+                        completionMessage: "¡Excelente! Has creado tu primera rama. Ahora puedes trabajar en nuevas características sin afectar el código principal."
+                    },
+                    {
+                        id: 2,
+                        title: "Navegando entre ramas",
+                        mission: "Ahora que tienes múltiples ramas, necesitas aprender a moverte entre ellas. Cambia de vuelta a la rama main y luego regresa a tu rama de características.",
+                        hint: "Usa <code>git checkout nombre-rama</code> para cambiar entre ramas",
+                        requiredCommands: ["git checkout"],
+                        completionMessage: "¡Perfecto! Ahora dominas la navegación entre ramas."
+                    },
+                    {
+                        id: 3,
+                        title: "Haciendo cambios en tu rama",
+                        mission: "Es hora de hacer algunos cambios en tu rama de características. Simularemos que has editado algunos archivos y necesitas hacer commit de los cambios.",
+                        hint: "Usa <code>git add .</code> y <code>git commit -m \"mensaje\"</code> para guardar tus cambios",
+                        requiredCommands: ["git add", "git commit"],
+                        completionMessage: "¡Genial! Has hecho commits en tu rama de características."
+                    },
+                    {
+                        id: 4,
+                        title: "Guardando trabajo temporal",
+                        mission: "Necesitas cambiar de rama rápidamente pero tienes trabajo sin terminar. Usa git stash para guardar temporalmente tus cambios.",
+                        hint: "Usa <code>git stash</code> para guardar cambios temporalmente y <code>git stash pop</code> para recuperarlos",
+                        requiredCommands: ["git stash"],
+                        completionMessage: "¡Excelente! Git stash es muy útil para guardar trabajo temporal."
+                    },
+                    {
+                        id: 5,
+                        title: "Merge: Fusionando ramas",
+                        mission: "Tu característica está lista. Es hora de fusionar tu rama de características con la rama main. ¡Cuidado con los posibles conflictos!",
+                        hint: "Primero cambia a la rama main con <code>git checkout main</code>, luego usa <code>git merge nombre-rama</code>",
+                        requiredCommands: ["git merge"],
+                        completionMessage: "¡Increíble! Has fusionado exitosamente tu rama de características."
+                    },
+                    {
+                        id: 6,
+                        title: "Resolviendo conflictos",
+                        mission: "¡Oh no! Hay un conflicto de merge. Otro desarrollador modificó las mismas líneas que tú. Necesitas resolver este conflicto manualmente.",
+                        hint: "Edita los archivos en conflicto, luego usa <code>git add .</code> y <code>git commit</code> para completar el merge",
+                        requiredCommands: ["resolve conflict"],
+                        completionMessage: "¡Bien hecho! Resolver conflictos es una habilidad esencial en el trabajo colaborativo."
+                    },
+                    {
+                        id: 7,
+                        title: "Trabajando con repositorios remotos",
+                        mission: "Es hora de sincronizar tu trabajo con el repositorio remoto. Primero obtén los últimos cambios, luego sube tu trabajo.",
+                        hint: "Usa <code>git pull</code> para obtener cambios y <code>git push origin rama</code> para subir tus cambios",
+                        requiredCommands: ["git pull", "git push"],
+                        completionMessage: "¡Perfecto! Ahora sabes cómo colaborar con otros desarrolladores."
+                    },
+                    {
+                        id: 8,
+                        title: "Rebase: Reescribiendo el historial",
+                        mission: "Para mantener un historial limpio, aprende a usar rebase. Esto reorganizará tus commits de manera más ordenada.",
+                        hint: "Usa <code>git rebase main</code> para reorganizar tus commits sobre la rama main",
+                        requiredCommands: ["git rebase"],
+                        completionMessage: "¡Maestro del Git! Has completado el Nivel 2 y dominas el branching avanzado."
+                    }
+                ];
+                
+                this.commandDescriptions = {
+                    'git branch': 'Lista todas las ramas o crea una nueva rama',
+                    'git checkout': 'Cambia entre ramas o crea y cambia a una nueva rama (-b)',
+                    'git merge': 'Fusiona una rama con la rama actual',
+                    'git stash': 'Guarda temporalmente cambios sin hacer commit',
+                    'git pull': 'Obtiene y fusiona cambios del repositorio remoto',
+                    'git push': 'Sube cambios al repositorio remoto',
+                    'git rebase': 'Reorganiza commits para mantener un historial lineal'
+                };
+                
+                this.initializeGame();
+            }
+            
+            initializeGame() {
+                this.updateUI();
+                this.setupEventListeners();
+                this.simulateExistingWork();
+            }
+            
+            setupEventListeners() {
+                const commandInput = document.getElementById('commandInput');
+                commandInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        this.executeCommand(commandInput.value.trim());
+                        commandInput.value = '';
+                    }
+                });
+            }
+            
+            simulateExistingWork() {
+                // Simular que ya hay trabajo previo en el repositorio
+                this.addToTerminal('Repositorio inicializado con historial existente...');
+                this.addToTerminal('3 commits en rama main');
+                this.addToTerminal('Archivos: index.html, style.css, script.js, README.md');
+            }
+            
+            executeCommand(command) {
+                this.addToTerminal(`$ ${command}`);
+                
+                const lowerCommand = command.toLowerCase();
+                
+                if (lowerCommand === 'git branch') {
+                    this.handleGitBranch();
+                } else if (lowerCommand.startsWith('git checkout -b')) {
+                    this.handleGitCheckoutNew(command);
+                } else if (lowerCommand.startsWith('git checkout')) {
+                    this.handleGitCheckout(command);
+                } else if (lowerCommand.startsWith('git merge')) {
+                    this.handleGitMerge(command);
+                } else if (lowerCommand === 'git stash') {
+                    this.handleGitStash();
+                } else if (lowerCommand === 'git stash pop') {
+                    this.handleGitStashPop();
+                } else if (lowerCommand === 'git pull') {
+                    this.handleGitPull();
+                } else if (lowerCommand.startsWith('git push')) {
+                    this.handleGitPush(command);
+                } else if (lowerCommand.startsWith('git rebase')) {
+                    this.handleGitRebase(command);
+                } else if (lowerCommand === 'git add .') {
+                    this.handleGitAdd();
+                } else if (lowerCommand.startsWith('git commit')) {
+                    this.handleGitCommit(command);
+                } else if (lowerCommand === 'git status') {
+                    this.handleGitStatus();
+                } else if (lowerCommand === 'git log') {
+                    this.handleGitLog();
+                } else if (lowerCommand === 'help' || lowerCommand === 'ayuda') {
+                    this.showHelp();
+                } else {
+                    this.addToTerminal(`Comando no reconocido: ${command}. Escribe 'help' para ver comandos disponibles.`);
+                }
+                
+                this.addLearnedCommand(command);
+                this.checkLevelCompletion(command);
+            }
+            
+            handleGitBranch() {
+                this.addToTerminal('Ramas disponibles:');
+                this.branches.forEach(branch => {
+                    const prefix = branch === this.currentBranch ? '* ' : '  ';
+                    const color = branch === this.currentBranch ? 'success' : 'normal';
+                    this.addToTerminal(`${prefix}${branch}`, color);
+                });
+            }
+            
+            handleGitCheckoutNew(command) {
+                const parts = command.split(' ');
+                if (parts.length < 4) {
+                    this.addToTerminal('Error: Especifica el nombre de la nueva rama');
+                    return;
+                }
+                
+                const branchName = parts.slice(3).join(' ');
+                if (this.branches.includes(branchName)) {
+                    this.addToTerminal(`Error: La rama '${branchName}' ya existe`);
+                    return;
+                }
+                
+                this.branches.push(branchName);
+                this.currentBranch = branchName;
+                this.addToTerminal(`Cambiado a nueva rama '${branchName}'`);
+                this.updateUI();
+            }
+            
+            handleGitCheckout(command) {
+                if (command.includes('-b')) return; // Ya manejado arriba
+                
+                const parts = command.split(' ');
+                if (parts.length < 3) {
+                    this.addToTerminal('Error: Especifica el nombre de la rama');
+                    return;
+                }
+                
+                const branchName = parts[2];
+                if (!this.branches.includes(branchName)) {
+                    this.addToTerminal(`Error: La rama '${branchName}' no existe`);
+                    return;
+                }
+                
+                this.currentBranch = branchName;
+                this.addToTerminal(`Cambiado a rama '${branchName}'`);
+                this.updateUI();
+            }
+            
+            handleGitMerge(command) {
+                const parts = command.split(' ');
+                if (parts.length < 3) {
+                    this.addToTerminal('Error: Especifica la rama a fusionar');
+                    return;
+                }
+                
+                const branchToMerge = parts[2];
+                if (!this.branches.includes(branchToMerge)) {
+                    this.addToTerminal(`Error: La rama '${branchToMerge}' no existe`);
+                    return;
+                }
+                
+                if (branchToMerge === this.currentBranch) {
+                    this.addToTerminal('Error: No puedes fusionar una rama consigo misma');
+                    return;
+                }
+                
+                // Simular posible conflicto en nivel 6
+                if (this.currentLevel === 6) {
+                    this.simulateConflict();
+                    return;
+                }
+                
+                this.addToTerminal(`Fusionando '${branchToMerge}' en '${this.currentBranch}'`);
+                this.addToTerminal('Merge completado exitosamente');
+                this.commitCount++;
+                this.updateUI();
+            }
+            
+            simulateConflict() {
+                this.hasConflict = true;
+                this.addToTerminal('Auto-merge falló; arregla conflictos y luego haz commit del resultado.', 'error');
+                this.addToTerminal('CONFLICTO (contenido): Merge conflict en index.html', 'error');
+                
+                const conflictSection = document.getElementById('conflictSection');
+                conflictSection.style.display = 'block';
+                
+                const conflictFiles = document.getElementById('conflictFiles');
+                conflictFiles.innerHTML = `
+                    <div class="conflict-file">
+                        <strong>index.html</strong>
+                        <pre><code>&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD
+&lt;title&gt;Mi Proyecto Principal&lt;/title&gt;
+=======
+&lt;title&gt;Mi Proyecto con Nueva Característica&lt;/title&gt;
+&gt;&gt;&gt;&gt;&gt;&gt;&gt; feature-branch</code></pre>
+                    </div>
+                `;
+            }
+            
+            handleGitStash() {
+                if (this.modifiedFiles === 0) {
+                    this.addToTerminal('No hay cambios locales para guardar');
+                    return;
+                }
+                
+                this.stashedChanges.push({
+                    branch: this.currentBranch,
+                    files: this.modifiedFiles
+                });
+                this.modifiedFiles = 0;
+                this.addToTerminal('Guardados cambios en stash');
+                this.updateUI();
+            }
+            
+            handleGitStashPop() {
+                if (this.stashedChanges.length === 0) {
+                    this.addToTerminal('No hay cambios en stash');
+                    return;
+                }
+                
+                const stashed = this.stashedChanges.pop();
+                this.modifiedFiles = stashed.files;
+                this.addToTerminal('Restaurados cambios desde stash');
+                this.updateUI();
+            }
+            
+            handleGitPull() {
+                this.addToTerminal('Desde origin/main');
+                this.addToTerminal(' * branch            main       -> FETCH_HEAD');
+                this.addToTerminal('Ya está actualizado.');
+                this.remoteSync = true;
+                this.updateUI();
+            }
+            
+            handleGitPush(command) {
+                const parts = command.split(' ');
+                if (parts.length < 4) {
+                    this.addToTerminal('Error: Especifica origen y rama (ej: git push origin main)');
+                    return;
+                }
+                
+                const origin = parts[2];
+                const branch = parts[3];
+                
+                this.addToTerminal(`Enumerando objetos: 5, listo.`);
+                this.addToTerminal(`Contando objetos: 100% (5/5), listo.`);
+                this.addToTerminal(`Escribiendo objetos: 100% (3/3), 267 bytes | 267.00 KiB/s, listo.`);
+                this.addToTerminal(`To https://github.com/usuario/proyecto.git`);
+                this.addToTerminal(`   a1b2c3d..e4f5g6h  ${branch} -> ${branch}`);
+                this.remoteSync = true;
+                this.updateUI();
+            }
+            
+            handleGitRebase(command) {
+                const parts = command.split(' ');
+                if (parts.length < 3) {
+                    this.addToTerminal('Error: Especifica la rama base');
+                    return;
+                }
+                
+                const baseBranch = parts[2];
+                this.addToTerminal(`Rebasing current branch onto ${baseBranch}...`);
+                this.addToTerminal('Aplicando: Feature implementation');
+                this.addToTerminal('Aplicando: Bug fixes');
+                this.addToTerminal(`Successfully rebased and updated refs/heads/${this.currentBranch}.`);
+                this.updateUI();
+            }
+            
+            handleGitAdd() {
+                this.modifiedFiles = 0;
+                this.addToTerminal('Archivos agregados al área de staging');
+            }
+            
+            handleGitCommit(command) {
+                this.commitCount++;
+                this.addToTerminal(`[${this.currentBranch} ${this.generateCommitHash()}] New feature implemented`);
+                this.addToTerminal('1 file changed, 5 insertions(+)');
+                this.updateUI();
+            }
+            
+            handleGitStatus() {
+                this.addToTerminal(`En la rama ${this.currentBranch}`);
+                if (this.modifiedFiles > 0) {
+                    this.addToTerminal(`${this.modifiedFiles} archivos modificados`);
+                } else {
+                    this.addToTerminal('nada para confirmar, directorio de trabajo limpio');
+                }
+            }
+            
+            handleGitLog() {
+                this.addToTerminal(`commit ${this.generateCommitHash()}`);
+                this.addToTerminal('Author: Git Adventure Player <player@gitadventure.com>');
+                this.addToTerminal(`Date: ${new Date().toLocaleDateString()}`);
+                this.addToTerminal('\n    Latest feature implementation\n');
+            }
+            
+            showHelp() {
+                this.addToTerminal('=== COMANDOS NIVEL 2 ===');
+                Object.entries(this.commandDescriptions).forEach(([cmd, desc]) => {
+                    this.addToTerminal(`${cmd.padEnd(15)} - ${desc}`);
+                });
+                this.addToTerminal('help                - Muestra esta ayuda');
+            }
+            
+            generateCommitHash() {
+                return Math.random().toString(36).substr(2, 7);
+            }
+            
+            addToTerminal(text, type = 'normal') {
+                const output = document.getElementById('terminalOutput');
+                const div = document.createElement('div');
+                
+                if (type === 'success') {
+                    div.style.color = '#28a745';
+                } else if (type === 'warning') {
+                    div.style.color = '#ffc107';
+                } else if (type === 'error') {
+                    div.style.color = '#dc3545';
+                }
+                
+                div.textContent = text;
+                output.appendChild(div);
+                
+                // Scroll to bottom
+                output.scrollTop = output.scrollHeight;
+            }
+            
+            addLearnedCommand(command) {
+                const baseCommand = command.split(' ').slice(0, 2).join(' ');
+                if (this.commandDescriptions[baseCommand]) {
+                    this.learnedCommands.add(baseCommand);
+                }
+            }
+            
+            checkLevelCompletion(command) {
+                const currentLevelData = this.levels[this.currentLevel - 1];
+                if (!currentLevelData) return;
+                
+                const baseCommand = command.toLowerCase().split(' ').slice(0, 2).join(' ');
+                
+                // Verificar si el comando ejecutado está en los comandos requeridos
+                const commandMatches = currentLevelData.requiredCommands.some(req => {
+                    return command.toLowerCase().includes(req.toLowerCase()) || 
+                           baseCommand === req.toLowerCase();
+                });
+                
+                // Caso especial para resolución de conflictos
+                if (currentLevelData.requiredCommands.includes('resolve conflict') && this.hasConflict) {
+                    // El conflicto se resuelve con el botón, no con comando
+                    return;
+                }
+                
+                if (commandMatches) {
+                    // Simular archivos modificados para ciertos niveles
+                    if (this.currentLevel === 3) {
+                        this.modifiedFiles = 2;
+                    }
+                    
+                    this.completeLevel();
+                }
+            }
+            
+            completeLevel() {
+                const currentLevelData = this.levels[this.currentLevel - 1];
+                
+                // Mostrar mensaje de completación
+                this.addToTerminal(`\n🎉 ¡NIVEL ${this.currentLevel} COMPLETADO! 🎉`, 'success');
+                this.addToTerminal(currentLevelData.completionMessage, 'success');
+                
+                // Agregar logro
+                this.achievements.push({
+                    title: currentLevelData.title,
+                    description: `Completaste: ${currentLevelData.title}`,
+                    level: this.currentLevel
+                });
+                
+                // Avanzar al siguiente nivel
+                this.currentLevel++;
+                this.progress = ((this.currentLevel - 1) / this.levels.length) * 100;
+                
+                setTimeout(() => {
+                    this.nextLevel();
+                }, 2000);
+            }
+            
+            nextLevel() {
+                if (this.currentLevel > this.levels.length) {
+                    this.gameCompleted();
+                    return;
+                }
+                
+                const nextLevelData = this.levels[this.currentLevel - 1];
+                document.getElementById('missionText').textContent = nextLevelData.mission;
+                document.getElementById('commandHint').innerHTML = `💡 <strong>Pista:</strong> ${nextLevelData.hint}`;
+                
+                this.addToTerminal(`\n--- NIVEL ${this.currentLevel}: ${nextLevelData.title} ---`);
+                
+                // Configuraciones especiales por nivel
+                if (this.currentLevel === 4) {
+                    this.modifiedFiles = 3; // Simular archivos modificados para stash
+                    this.updateUI();
+                }
+                
+                this.updateUI();
+            }
+            
+            gameCompleted() {
+                document.getElementById('missionText').innerHTML = `
+                    <div class="text-center">
+                        <h2>🎊 ¡NIVEL 2 COMPLETADO! 🎊</h2>
+                        <p>Has dominado el branching, merging y colaboración en Git.</p>
+                        <p>Ahora eres un desarrollador Git intermedio-avanzado.</p>
+                        <div class="mt-3">
+                            <span class="badge bg-success me-2">Branching Master</span>
+                            <span class="badge bg-primary me-2">Merge Expert</span>
+                            <span class="badge bg-warning">Collaboration Pro</span>
+                        </div>
+                    </div>
+                `;
+                document.getElementById('commandHint').innerHTML = `
+                    <div class="text-center">
+                        <strong>🏆 ¡Eres un Git Master Nivel 2! 🏆</strong><br>
+                        Estás listo para proyectos colaborativos complejos.
+                    </div>
+                `;
+                
+                this.addToTerminal('\n🎊 ¡NIVEL 2 COMPLETADO! 🎊', 'success');
+                this.addToTerminal('¡Has dominado Git branching y colaboración!', 'success');
+                this.addToTerminal('Próximamente: Nivel 3 - Git Workflows Avanzados', 'success');
+            }
+            
+            updateUI() {
+                // Actualizar nivel y progreso
+                document.getElementById('currentLevel').textContent = this.currentLevel;
+                document.getElementById('progressBar').style.width = `${this.progress}%`;
+                
+                // Actualizar rama actual
+                const branchElement = document.getElementById('currentBranch');
+                branchElement.textContent = this.currentBranch;
+                branchElement.className = `git-branch branch-${this.getBranchClass(this.currentBranch)}`;
+                
+                // Actualizar lista de ramas
+                this.updateBranchesList();
+                
+                // Actualizar contadores
+                document.getElementById('commitCount').textContent = this.commitCount;
+                document.getElementById('modifiedFiles').textContent = this.modifiedFiles;
+                
+                // Actualizar árbol de ramas
+                this.updateBranchTree();
+                
+                // Actualizar estado de colaboración
+                this.updateCollaborationStatus();
+                
+                // Actualizar logros
+                this.updateAchievements();
+            }
+            
+            getBranchClass(branchName) {
+                if (branchName === 'main' || branchName === 'master') return 'main';
+                if (branchName.includes('feature')) return 'feature';
+                if (branchName.includes('hotfix')) return 'hotfix';
+                if (branchName.includes('develop')) return 'develop';
+                return 'feature';
+            }
+            
+            updateBranchesList() {
+                const container = document.getElementById('branchesList');
+                container.innerHTML = '';
+                
+                this.branches.forEach(branch => {
+                    const span = document.createElement('span');
+                    span.className = `git-branch branch-${this.getBranchClass(branch)}`;
+                    span.textContent = branch;
+                    if (branch === this.currentBranch) {
+                        span.style.fontWeight = 'bold';
+                        span.style.border = '2px solid #fff';
+                    }
+                    container.appendChild(span);
+                });
+            }
+            
+            updateBranchTree() {
+                const container = document.getElementById('branchTree');
+                let treeHtml = '';
+                
+                this.branches.forEach((branch, index) => {
+                    const isActive = branch === this.currentBranch;
+                    const prefix = isActive ? '* ' : '  ';
+                    const commits = branch === 'main' ? 3 : Math.floor(Math.random() * 3) + 1;
+                    
+                    treeHtml += `<div${isActive ? ' style="color: #28a745; font-weight: bold;"' : ''}>${prefix}${branch}</div>`;
+                    
+                    for (let i = 0; i < commits; i++) {
+                        const isLast = i === commits - 1;
+                        const connector = isLast ? '└──' : '├──';
+                        treeHtml += `<div>  ${connector} commit ${i + 1}</div>`;
+                    }
+                });
+                
+                container.innerHTML = treeHtml;
+            }
+            
+            updateCollaborationStatus() {
+                const container = document.getElementById('collaborationStatus');
+                const syncStatus = this.remoteSync ? 
+                    '<span class="text-success">Sincronizado</span>' : 
+                    '<span class="text-warning">Pendiente sync</span>';
+                
+                container.innerHTML = `
+                    <strong>Repositorio Remoto:</strong> origin<br>
+                    <strong>Estado:</strong> ${syncStatus}<br>
+                    <strong>Contribuidores:</strong> ${Math.max(1, this.branches.length)}<br>
+                    <strong>Stash:</strong> ${this.stashedChanges.length} elementos
+                `;
+            }
+            
+            updateAchievements() {
+                const container = document.getElementById('achievements');
+                if (this.achievements.length === 0) {
+                    container.innerHTML = '<small class="text-muted">Desbloquea logros de branching y colaboración</small>';
+                    return;
+                }
+                
+                container.innerHTML = '';
+                this.achievements.forEach((achievement, index) => {
+                    const div = document.createElement('div');
+                    div.className = 'mb-2 p-2 rounded success-animation';
+                    div.style.background = 'linear-gradient(45deg, #ff9a9e, #fecfef)';
+                    div.style.color = 'white';
+                    div.innerHTML = `
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-code-branch me-2"></i>
+                            <div>
+                                <strong>Nivel ${achievement.level}: ${achievement.title}</strong><br>
+                                <small>${achievement.description}</small>
+                            </div>
+                        </div>
+                    `;
+                    container.appendChild(div);
+                });
+            }
+        }
+        
+        // Función para insertar comandos rápidos
+        function insertCommand(command) {
+            const input = document.getElementById('commandInput');
+            if (command.endsWith('-b') || command.endsWith('origin')) {
+                input.value = command + ' ';
+            } else {
+                input.value = command;
+            }
+            input.focus();
+        }
+        
+        // Función para resolver conflictos
+        function resolveConflict() {
+            const game = window.gitGameLevel2;
+            game.hasConflict = false;
+            document.getElementById('conflictSection').style.display = 'none';
+            game.addToTerminal('Conflicto resuelto manualmente', 'success');
+            game.addToTerminal('Usa git add . && git commit para completar el merge', 'success');
+            
+            // Auto-completar el nivel 6
+            if (game.currentLevel === 6) {
+                game.completeLevel();
+            }
+        }
+        
+        // Inicializar el juego cuando se carga la página
+        document.addEventListener('DOMContentLoaded', () => {
+            window.gitGameLevel2 = new GitAdventureLevel2();
+        });
+    </script>
+</body>
+</html>tal 3 (delta 0), reusado 0 (delta 0)`);
+                this.addToTerminal(`To

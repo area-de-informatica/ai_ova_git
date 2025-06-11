@@ -1,0 +1,1168 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guía de Conceptos Git Adventure Nivel 2</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+        }
+
+        .main-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            margin: 20px auto;
+            max-width: 1200px;
+        }
+
+        .hero-section {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 20px 20px 0 0;
+            padding: 40px;
+            text-align: center;
+        }
+
+        .concept-card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+            overflow: hidden;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .concept-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .concept-header {
+            background: linear-gradient(45deg, #ff9a9e 0%, #fecfef 50%, #fecfef 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 15px 15px 0 0;
+        }
+
+        .concept-header.branching {
+            background: linear-gradient(45deg, #56ab2f 0%, #a8e6cf 100%);
+        }
+
+        .concept-header.merging {
+            background: linear-gradient(45deg, #ff6b6b 0%, #feca57 100%);
+        }
+
+        .concept-header.stashing {
+            background: linear-gradient(45deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .concept-header.remote {
+            background: linear-gradient(45deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        .concept-header.conflicts {
+            background: linear-gradient(45deg, #ffecd2 0%, #fcb69f 100%);
+            color: #333;
+        }
+
+        .concept-header.rebase {
+            background: linear-gradient(45deg, #4facfe 0%, #00f2fe 100%);
+        }
+
+        .command-box {
+            background: #2d3748;
+            color: #e2e8f0;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+            font-family: 'Courier New', monospace;
+            position: relative;
+            overflow-x: auto;
+        }
+
+        .command-box::before {
+            content: '$';
+            color: #68d391;
+            margin-right: 8px;
+            font-weight: bold;
+        }
+
+        .copy-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 0.8em;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .copy-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .workflow-diagram {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .branch-visual {
+            font-family: monospace;
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            overflow-x: auto;
+        }
+
+        .tip-box {
+            background: linear-gradient(45deg, #ffeaa7 0%, #fab1a0 100%);
+            color: #2d3436;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 15px 0;
+            border-left: 5px solid #fdcb6e;
+        }
+
+        .warning-box {
+            background: linear-gradient(45deg, #ff7675 0%, #fd79a8 100%);
+            color: white;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 15px 0;
+            border-left: 5px solid #e84393;
+        }
+
+        .info-box {
+            background: linear-gradient(45deg, #74b9ff 0%, #0984e3 100%);
+            color: white;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 15px 0;
+            border-left: 5px solid #0984e3;
+        }
+
+        .level-indicator {
+            background: linear-gradient(45deg, #ff512f, #dd2476);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: bold;
+            display: inline-block;
+            margin-bottom: 20px;
+        }
+
+        .table-custom {
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .table-custom thead {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .accordion-button {
+            background: linear-gradient(45deg, #f8f9fa, #e9ecef);
+            border: none;
+            font-weight: 600;
+        }
+
+        .accordion-button:not(.collapsed) {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .sidebar {
+            position: sticky;
+            top: 20px;
+            height: fit-content;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .sidebar-link {
+            display: block;
+            padding: 10px 15px;
+            color: #667eea;
+            text-decoration: none;
+            border-radius: 8px;
+            margin-bottom: 5px;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar-link:hover {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            transform: translateX(5px);
+        }
+
+        .git-flow-diagram {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                position: static;
+                margin-bottom: 20px;
+            }
+            
+            .command-box {
+                font-size: 0.8em;
+            }
+        }
+
+        .progress-tracker {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .progress-step {
+            display: inline-block;
+            width: 12%;
+            text-align: center;
+            margin: 0 1%;
+        }
+
+        .progress-circle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #e9ecef;
+            color: #666;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 5px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .progress-circle.completed {
+            background: linear-gradient(45deg, #56ab2f, #a8e6cf);
+            color: white;
+        }
+
+        .progress-circle.current {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <!-- Hero Section -->
+        <div class="hero-section">
+            <h1 class="display-4 fw-bold mb-3">
+                <i class="fab fa-git-alt"></i> Guía de Conceptos Git Adventure Nivel 2
+            </h1>
+            <p class="lead mb-4">Branching, Merging y Colaboración Avanzada</p>
+            <div class="level-indicator">
+                <i class="fas fa-graduation-cap"></i> NIVEL INTERMEDIO-AVANZADO
+            </div>
+        </div>
+
+        <div class="container-fluid p-4">
+            <div class="row">
+                <!-- Sidebar de Navegación -->
+                <div class="col-lg-3">
+                    <div class="sidebar">
+                        <h5 class="mb-3"><i class="fas fa-list"></i> Contenido</h5>
+                        <a href="#branching" class="sidebar-link">
+                            <i class="fas fa-code-branch"></i> Branching
+                        </a>
+                        <a href="#merging" class="sidebar-link">
+                            <i class="fas fa-code-merge"></i> Merging
+                        </a>
+                        <a href="#stashing" class="sidebar-link">
+                            <i class="fas fa-archive"></i> Stashing
+                        </a>
+                        <a href="#conflicts" class="sidebar-link">
+                            <i class="fas fa-exclamation-triangle"></i> Conflictos
+                        </a>
+                        <a href="#remote" class="sidebar-link">
+                            <i class="fas fa-cloud"></i> Repositorios Remotos
+                        </a>
+                        <a href="#rebase" class="sidebar-link">
+                            <i class="fas fa-layer-group"></i> Rebase
+                        </a>
+                        <a href="#commands" class="sidebar-link">
+                            <i class="fas fa-terminal"></i> Referencia de Comandos
+                        </a>
+                        <a href="#workflows" class="sidebar-link">
+                            <i class="fas fa-project-diagram"></i> Workflows
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Contenido Principal -->
+                <div class="col-lg-9">
+                    <!-- Progress Tracker -->
+                    <div class="progress-tracker">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="progress-step">
+                                <div class="progress-circle completed">1</div>
+                                <small>Branching</small>
+                            </div>
+                            <div class="progress-step">
+                                <div class="progress-circle completed">2</div>
+                                <small>Merging</small>
+                            </div>
+                            <div class="progress-step">
+                                <div class="progress-circle completed">3</div>
+                                <small>Stashing</small>
+                            </div>
+                            <div class="progress-step">
+                                <div class="progress-circle completed">4</div>
+                                <small>Conflictos</small>
+                            </div>
+                            <div class="progress-step">
+                                <div class="progress-circle completed">5</div>
+                                <small>Remotos</small>
+                            </div>
+                            <div class="progress-step">
+                                <div class="progress-circle completed">6</div>
+                                <small>Rebase</small>
+                            </div>
+                            <div class="progress-step">
+                                <div class="progress-circle current">7</div>
+                                <small>Workflows</small>
+                            </div>
+                            <div class="progress-step">
+                                <div class="progress-circle">8</div>
+                                <small>Mastery</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sección 1: Branching -->
+                    <div id="branching" class="concept-card">
+                        <div class="concept-header branching">
+                            <h2><i class="fas fa-code-branch"></i> Branching (Ramificación)</h2>
+                            <p class="mb-0">Trabajando con múltiples líneas de desarrollo</p>
+                        </div>
+                        <div class="card-body">
+                            <h4>¿Qué es el Branching?</h4>
+                            <p>Las ramas (branches) en Git te permiten divergir de la línea principal de desarrollo y trabajar en características, experimentos o correcciones sin afectar el código principal.</p>
+                            
+                            <h5>Conceptos Clave:</h5>
+                            <ul>
+                                <li><strong>main/master</strong>: La rama principal del proyecto</li>
+                                <li><strong>feature branch</strong>: Rama para desarrollar nuevas características</li>
+                                <li><strong>hotfix branch</strong>: Rama para correcciones urgentes</li>
+                                <li><strong>develop branch</strong>: Rama de desarrollo activo</li>
+                            </ul>
+
+                            <h5>Comandos Básicos:</h5>
+                            <div class="command-box">
+                                git branch
+                                <button class="copy-btn" onclick="copyToClipboard('git branch')">Copiar</button>
+                            </div>
+                            <p><em>Lista todas las ramas locales</em></p>
+
+                            <div class="command-box">
+                                git branch nueva-caracteristica
+                                <button class="copy-btn" onclick="copyToClipboard('git branch nueva-caracteristica')">Copiar</button>
+                            </div>
+                            <p><em>Crea una nueva rama llamada "nueva-caracteristica"</em></p>
+
+                            <div class="command-box">
+                                git checkout -b nueva-caracteristica
+                                <button class="copy-btn" onclick="copyToClipboard('git checkout -b nueva-caracteristica')">Copiar</button>
+                            </div>
+                            <p><em>Crea y cambia a una nueva rama en un solo comando</em></p>
+
+                            <div class="command-box">
+                                git checkout main
+                                <button class="copy-btn" onclick="copyToClipboard('git checkout main')">Copiar</button>
+                            </div>
+                            <p><em>Cambia a la rama main</em></p>
+
+                            <div class="branch-visual">
+* main
+  ├── commit 1: Initial commit
+  ├── commit 2: Add basic structure
+  └── commit 3: Setup configuration
+  
+* feature/nueva-caracteristica
+  ├── commit 4: Start new feature
+  └── commit 5: Implement feature logic
+                            </div>
+
+                            <div class="tip-box">
+                                <strong><i class="fas fa-lightbulb"></i> Tip:</strong> 
+                                Usa nombres descriptivos para tus ramas como "feature/login-system" o "hotfix/security-patch"
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sección 2: Merging -->
+                    <div id="merging" class="concept-card">
+                        <div class="concept-header merging">
+                            <h2><i class="fas fa-code-merge"></i> Merging (Fusión)</h2>
+                            <p class="mb-0">Integrando cambios de diferentes ramas</p>
+                        </div>
+                        <div class="card-body">
+                            <h4>¿Qué es el Merging?</h4>
+                            <p>El merge es el proceso de integrar cambios de una rama hacia otra. Es fundamental para combinar el trabajo realizado en diferentes características.</p>
+                            
+                            <h5>Tipos de Merge:</h5>
+                            <div class="accordion" id="mergeAccordion">
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#fastForward">
+                                            Fast-Forward Merge
+                                        </button>
+                                    </h2>
+                                    <div id="fastForward" class="accordion-collapse collapse show" data-bs-parent="#mergeAccordion">
+                                        <div class="accordion-body">
+                                            <p>Ocurre cuando la rama de destino no ha tenido commits adicionales desde que se creó la rama de origen.</p>
+                                            <div class="branch-visual">
+main:     A---B---C
+                  \
+feature:           D---E
+                            </div>
+                                            <p>Después del merge:</p>
+                                            <div class="branch-visual">
+main:     A---B---C---D---E
+                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#threeway">
+                                            Three-way Merge
+                                        </button>
+                                    </h2>
+                                    <div id="threeway" class="accordion-collapse collapse" data-bs-parent="#mergeAccordion">
+                                        <div class="accordion-body">
+                                            <p>Ocurre cuando ambas ramas han divergido y tienen commits únicos.</p>
+                                            <div class="branch-visual">
+main:     A---B---C---F
+               \       \
+feature:        D---E---M (merge commit)
+                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <h5>Comandos de Merge:</h5>
+                            <div class="command-box">
+                                git checkout main
+                                <button class="copy-btn" onclick="copyToClipboard('git checkout main')">Copiar</button>
+                            </div>
+                            <div class="command-box">
+                                git merge feature/nueva-caracteristica
+                                <button class="copy-btn" onclick="copyToClipboard('git merge feature/nueva-caracteristica')">Copiar</button>
+                            </div>
+                            <p><em>Fusiona la rama "feature/nueva-caracteristica" en la rama actual (main)</em></p>
+
+                            <div class="info-box">
+                                <strong><i class="fas fa-info-circle"></i> Importante:</strong> 
+                                Siempre asegúrate de estar en la rama de destino antes de hacer el merge.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sección 3: Stashing -->
+                    <div id="stashing" class="concept-card">
+                        <div class="concept-header stashing">
+                            <h2><i class="fas fa-archive"></i> Stashing (Almacenamiento Temporal)</h2>
+                            <p class="mb-0">Guardando trabajo temporal sin hacer commit</p>
+                        </div>
+                        <div class="card-body">
+                            <h4>¿Qué es el Stashing?</h4>
+                            <p>Git stash te permite guardar temporalmente cambios sin hacer commit, útil cuando necesitas cambiar de rama rápidamente pero no quieres perder tu trabajo actual.</p>
+                            
+                            <h5>Casos de Uso Comunes:</h5>
+                            <ul>
+                                <li>Cambiar de rama con trabajo sin terminar</li>
+                                <li>Actualizar desde el repositorio remoto</li>
+                                <li>Probar una solución rápida</li>
+                                <li>Guardar experimentos temporales</li>
+                            </ul>
+
+                            <h5>Comandos de Stash:</h5>
+                            <div class="command-box">
+                                git stash
+                                <button class="copy-btn" onclick="copyToClipboard('git stash')">Copiar</button>
+                            </div>
+                            <p><em>Guarda los cambios actuales en el stash</em></p>
+
+                            <div class="command-box">
+                                git stash save "Trabajo en progreso en login"
+                                <button class="copy-btn" onclick="copyToClipboard('git stash save \"Trabajo en progreso en login\"')">Copiar</button>
+                            </div>
+                            <p><em>Guarda con un mensaje descriptivo</em></p>
+
+                            <div class="command-box">
+                                git stash list
+                                <button class="copy-btn" onclick="copyToClipboard('git stash list')">Copiar</button>
+                            </div>
+                            <p><em>Lista todos los stashes guardados</em></p>
+
+                            <div class="command-box">
+                                git stash pop
+                                <button class="copy-btn" onclick="copyToClipboard('git stash pop')">Copiar</button>
+                            </div>
+                            <p><em>Restaura el último stash y lo elimina de la lista</em></p>
+
+                            <div class="command-box">
+                                git stash apply
+                                <button class="copy-btn" onclick="copyToClipboard('git stash apply')">Copiar</button>
+                            </div>
+                            <p><em>Restaura el último stash pero lo mantiene en la lista</em></p>
+
+                            <div class="workflow-diagram">
+                                <h6>Flujo de Trabajo con Stash:</h6>
+                                <div class="d-flex justify-content-around align-items-center flex-wrap">
+                                    <div class="text-center m-2">
+                                        <div class="badge bg-primary p-3 mb-2">
+                                            <i class="fas fa-edit fa-2x"></i>
+                                        </div>
+                                        <p>Trabajando</p>
+                                    </div>
+                                    <div class="text-center m-2">
+                                        <i class="fas fa-arrow-right fa-2x text-muted"></i>
+                                    </div>
+                                    <div class="text-center m-2">
+                                        <div class="badge bg-warning p-3 mb-2">
+                                            <i class="fas fa-archive fa-2x"></i>
+                                        </div>
+                                        <p>git stash</p>
+                                    </div>
+                                    <div class="text-center m-2">
+                                        <i class="fas fa-arrow-right fa-2x text-muted"></i>
+                                    </div>
+                                    <div class="text-center m-2">
+                                        <div class="badge bg-info p-3 mb-2">
+                                            <i class="fas fa-code-branch fa-2x"></i>
+                                        </div>
+                                        <p>Cambiar rama</p>
+                                    </div>
+                                    <div class="text-center m-2">
+                                        <i class="fas fa-arrow-right fa-2x text-muted"></i>
+                                    </div>
+                                    <div class="text-center m-2">
+                                        <div class="badge bg-success p-3 mb-2">
+                                            <i class="fas fa-undo fa-2x"></i>
+                                        </div>
+                                        <p>git stash pop</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sección 4: Conflictos -->
+                    <div id="conflicts" class="concept-card">
+                        <div class="concept-header conflicts">
+                            <h2><i class="fas fa-exclamation-triangle"></i> Resolución de Conflictos</h2>
+                            <p class="mb-0">Manejando cambios contradictorios en el código</p>
+                        </div>
+                        <div class="card-body">
+                            <h4>¿Qué son los Conflictos?</h4>
+                            <p>Los conflictos ocurren cuando Git no puede fusionar automáticamente cambios porque múltiples personas han modificado las mismas líneas de código de manera diferente.</p>
+                            
+                            <h5>Cuándo Ocurren Conflictos:</h5>
+                            <ul>
+                                <li>Durante un merge entre ramas</li>
+                                <li>Al hacer pull desde un repositorio remoto</li>
+                                <li>Durante un rebase</li>
+                                <li>Al aplicar un stash</li>
+                            </ul>
+
+                            <h5>Anatomía de un Conflicto:</h5>
+                            <div class="command-box">
+&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD
+&lt;title&gt;Mi Proyecto Principal&lt;/title&gt;
+=======
+&lt;title&gt;Mi Proyecto con Nueva Característica&lt;/title&gt;
+&gt;&gt;&gt;&gt;&gt;&gt;&gt; feature-branch
+                                <button class="copy-btn" onclick="copyToClipboard('conflict example')">Ver</button>
+                            </div>
+
+                            <div class="info-box">
+                                <strong>Explicación de marcadores:</strong><br>
+                                <code>&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD</code>: Inicio de tus cambios locales<br>
+                                <code>=======</code>: Separador entre versiones<br>
+                                <code>&gt;&gt;&gt;&gt;&gt;&gt;&gt; rama</code>: Final de los cambios de la otra rama
+                            </div>
+
+                            <h5>Proceso de Resolución:</h5>
+                            <ol>
+                                <li><strong>Identificar archivos en conflicto:</strong>
+                                    <div class="command-box">
+                                        git status
+                                        <button class="copy-btn" onclick="copyToClipboard('git status')">Copiar</button>
+                                    </div>
+                                </li>
+                                <li><strong>Editar archivos manualmente</strong> para resolver conflictos</li>
+                                <li><strong>Marcar como resuelto:</strong>
+                                    <div class="command-box">
+                                        git add archivo-resuelto.html
+                                        <button class="copy-btn" onclick="copyToClipboard('git add archivo-resuelto.html')">Copiar</button>
+                                    </div>
+                                </li>
+                                <li><strong>Completar el merge:</strong>
+                                    <div class="command-box">
+                                        git commit
+                                        <button class="copy-btn" onclick="copyToClipboard('git commit')">Copiar</button>
+                                    </div>
+                                </li>
+                            </ol>
+
+                            <div class="warning-box">
+                                <strong><i class="fas fa-exclamation-circle"></i> Importante:</strong> 
+                                Nunca hagas commit de un archivo que aún contenga marcadores de conflicto (&lt;&lt;&lt;, ===, &gt;&gt;&gt;)
+                            </div>
+
+                            <h5>Herramientas de Resolución:</h5>
+                            <ul>
+                                <li><strong>Editor manual</strong>: VS Code, Sublime, etc.</li>
+                                <li><strong>Herramientas visuales</strong>: GitKraken, Sourcetree</li>
+                                <li><strong>Línea de comandos</strong>: vimdiff, meld</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Sección 5: Repositorios Remotos -->
+                    <div id="remote" class="concept-card">
+                        <div class="concept-header remote">
+                            <h2><i class="fas fa-cloud"></i> Repositorios Remotos</h2>
+                            <p class="mb-0">Colaborando con otros desarrolladores</p>
+                        </div>
+                        <div class="card-body">
+                            <h4>¿Qué son los Repositorios Remotos?</h4>
+                            <p>Los repositorios remotos son versiones de tu proyecto alojadas en internet o en una red, permitiendo colaboración entre múltiples desarrolladores.</p>
+                            
+                            <h5>Conceptos Clave:</h5>
+                            <ul>
+                                <li><strong>origin</strong>: Nombre por defecto del repositorio remoto principal</li>
+                                <li><strong>upstream</strong>: Repositorio original del cual hiciste fork</li>
+                                <li><strong>fetch</strong>: Descargar cambios sin fusionar</li>
+                                <li><strong>pull</strong>: Descargar y fusionar cambios</li>
+                                <li><strong>push</strong>: Subir cambios locales al remoto</li>
+                            </ul>
+
+                            <h5>Comandos Principales:</h5>
+                            <div class="command-box">
+                                git remote -v
+                                <button class="copy-btn" onclick="copyToClipboard('git remote -v')">Copiar</button>
+                            </div>
+                            <p><em>Muestra los repositorios remotos configurados</em></p>
+
+                            <div class="command-box">
+                                git pull origin main
+                                <button class="copy-btn" onclick="copyToClipboard('git pull origin main')">Copiar</button>
+                            </div>
+                            <p><em>Descarga y fusiona cambios de la rama main del remoto</em></p>
+
+                            <div class="command-box">
+                                git push origin feature/nueva-caracteristica
+                                <button class="copy-btn" onclick="copyToClipboard('git push origin feature/nueva-caracteristica')">Copiar</button>
+                            </div>
+                            <p><em>Sube tu rama de características al repositorio remoto</em></p>
+
+                            <div class="command-box">
+                                git fetch origin
+                                <button class="copy-btn" onclick="copyToClipboard('git fetch origin')">Copiar</button>
+                            </div>
+                            <p><em>Descarga cambios sin fusionar (más seguro)</em></p>
+
+                            <h5>Flujo de Colaboración:</h5>
+                            <div class="workflow-diagram">
+                                <div class="row text-center">
+                                    <div class="col-md-3">
+                                        <div class="badge bg-info p-3 mb-2 w-100">
+                                            <i class="fas fa-download fa-2x"></i>
+                                        </div>
+                                        <h6>1. Pull</h6>
+                                        <p>Obtener últimos cambios</p>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="badge bg-warning p-3 mb-2 w-100">
+                                            <i class="fas fa-code fa-2x"></i>
+                                        </div>
+                                        <h6>2. Develop</h6>
+                                        <p>Trabajar en tu rama</p>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="badge bg-primary p-3 mb-2 w-100">
+                                            <i class="fas fa-save fa-2x"></i>
+                                        </div>
+                                        <h6>3. Commit</h6>
+                                        <p>Guardar cambios localmente</p>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="badge bg-success p-3 mb-2 w-100">
+                                            <i class="fas fa-upload fa-2x"></i>
+                                        </div>
+                                        <h6>4. Push</h6>
+                                        <p>Subir al repositorio remoto</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="tip-box">
+                                <strong><i class="fas fa-lightbulb"></i> Buena Práctica:</strong> 
+                                Siempre haz <code>git pull</code> antes de comenzar a trabajar y antes de hacer <code>git push</code>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sección 6: Rebase -->
+                    <div id="rebase" class="concept-card">
+                        <div class="concept-header rebase">
+                            <h2><i class="fas fa-layer-group"></i> Rebase</h2>
+                            <p class="mb-0">Reescribiendo el historial para un proyecto más limpio</p>
+                        </div>
+                        <div class="card-body">
+                            <h4>¿Qué es el Rebase?</h4>
+                            <p>Rebase es una alternativa al merge que "reescribe" el historial moviendo commits de una rama para que aparezcan como si hubieran sido creados desde el punto más reciente de otra rama.</p>
+                            
+                            <h5>Rebase vs Merge:</h5>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h6>Con Merge:</h6>
+                                    <div class="branch-visual">
+main:     A---B---C---F---G
+               \           /
+feature:        D---E-----
+                                    </div>
+                                    <p><small>Preserva el historial real pero puede ser confuso</small></p>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6>Con Rebase:</h6>
+                                    <div class="branch-visual">
+main:     A---B---C---F---D'---E'
+                                    </div>
+                                    <p><small>Historial lineal y más limpio</small></p>
+                                </div>
+                            </div>
+
+                            <h5>Comandos de Rebase:</h5>
+                            <div class="command-box">
+                                git rebase main
+                                <button class="copy-btn" onclick="copyToClipboard('git rebase main')">Copiar</button>
+                            </div>
+                            <p><em>Rebasa la rama actual sobre main</em></p>
+
+                            <div class="command-box">
+                                git rebase -i HEAD~3
+                                <button class="copy-btn" onclick="copyToClipboard('git rebase -i HEAD~3')">Copiar</button>
+                            </div>
+                            <p><em>Rebase interactivo para modificar los últimos 3 commits</em></p>
+
+                            <h5>Opciones del Rebase Interactivo:</h5>
+                            <div class="table-responsive">
+                                <table class="table table-custom">
+                                    <thead>
+                                        <tr>
+                                            <th>Comando</th>
+                                            <th>Descripción</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td><code>pick</code></td>
+                                            <td>Usar el commit tal como está</td>
+                                        </tr>
+                                        <tr>
+                                            <td><code>reword</code></td>
+                                            <td>Usar el commit pero editar el mensaje</td>
+                                        </tr>
+                                        <tr>
+                                            <td><code>edit</code></td>
+                                            <td>Usar el commit pero parar para editar</td>
+                                        </tr>
+                                        <tr>
+                                            <td><code>squash</code></td>
+                                            <td>Combinar con el commit anterior</td>
+                                        </tr>
+                                        <tr>
+                                            <td><code>drop</code></td>
+                                            <td>Eliminar el commit</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <div class="warning-box">
+                                <strong><i class="fas fa-exclamation-triangle"></i> ¡Cuidado!</strong> 
+                                Nunca hagas rebase de commits que ya han sido pusheados y son usados por otros desarrolladores.
+                            </div>
+
+                            <h5>Cuándo Usar Rebase:</h5>
+                            <ul>
+                                <li>✅ En ramas de características locales</li>
+                                <li>✅ Para limpiar el historial antes de hacer merge</li>
+                                <li>✅ Para mantener un historial lineal</li>
+                                <li>❌ En ramas compartidas o públicas</li>
+                                <li>❌ Si no estás seguro de lo que haces</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Sección 7: Referencia de Comandos -->
+                    <div id="commands" class="concept-card">
+                        <div class="concept-header">
+                            <h2><i class="fas fa-terminal"></i> Referencia Rápida de Comandos</h2>
+                            <p class="mb-0">Todos los comandos del Nivel 2 en un lugar</p>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-lg-6">
+                                    <h5>Comandos de Branching:</h5>
+                                    <div class="command-box">git branch</div>
+                                    <div class="command-box">git branch nombre-rama</div>
+                                    <div class="command-box">git checkout rama</div>
+                                    <div class="command-box">git checkout -b nueva-rama</div>
+                                    <div class="command-box">git branch -d rama</div>
+                                    
+                                    <h5>Comandos de Merge:</h5>
+                                    <div class="command-box">git merge rama</div>
+                                    <div class="command-box">git merge --no-ff rama</div>
+                                    <div class="command-box">git merge --abort</div>
+                                </div>
+                                <div class="col-lg-6">
+                                    <h5>Comandos de Stash:</h5>
+                                    <div class="command-box">git stash</div>
+                                    <div class="command-box">git stash pop</div>
+                                    <div class="command-box">git stash list</div>
+                                    <div class="command-box">git stash apply</div>
+                                    <div class="command-box">git stash drop</div>
+                                    
+                                    <h5>Comandos Remotos:</h5>
+                                    <div class="command-box">git pull origin rama</div>
+                                    <div class="command-box">git push origin rama</div>
+                                    <div class="command-box">git fetch origin</div>
+                                    <div class="command-box">git remote -v</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sección 8: Workflows -->
+                    <div id="workflows" class="concept-card">
+                        <div class="concept-header">
+                            <h2><i class="fas fa-project-diagram"></i> Workflows de Git</h2>
+                            <p class="mb-0">Metodologías para trabajar en equipo</p>
+                        </div>
+                        <div class="card-body">
+                            <h4>Git Flow</h4>
+                            <p>Un modelo de branching que define roles específicos para diferentes tipos de ramas.</p>
+                            
+                            <div class="git-flow-diagram">
+                                <div class="branch-visual">
+master:     ●───●───●───●───●
+                 \           /
+release:          ●───●───●
+                   \       /
+develop:    ●───●───●───●───●───●
+                 \ /     \ /
+feature:          ●───●   ●───●
+                 /           \
+hotfix:                      ●───●
+                                </div>
+                            </div>
+
+                            <h5>Tipos de Ramas en Git Flow:</h5>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <ul>
+                                        <li><strong>master/main</strong>: Código en producción</li>
+                                        <li><strong>develop</strong>: Rama de desarrollo principal</li>
+                                        <li><strong>feature/*</strong>: Nuevas características</li>
+                                    </ul>
+                                </div>
+                                <div class="col-md-6">
+                                    <ul>
+                                        <li><strong>release/*</strong>: Preparación de releases</li>
+                                        <li><strong>hotfix/*</strong>: Correcciones urgentes</li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <h4>GitHub Flow</h4>
+                            <p>Un workflow más simple, ideal para proyectos con deploy continuo.</p>
+                            
+                            <div class="workflow-diagram">
+                                <div class="row text-center">
+                                    <div class="col-md-2">
+                                        <div class="badge bg-primary p-2 mb-2 w-100">main</div>
+                                        <p><small>Siempre deployable</small></p>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <div class="badge bg-info p-2 mb-2 w-100">branch</div>
+                                        <p><small>Crear rama</small></p>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <div class="badge bg-warning p-2 mb-2 w-100">commit</div>
+                                        <p><small>Hacer cambios</small></p>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <div class="badge bg-secondary p-2 mb-2 w-100">PR</div>
+                                        <p><small>Pull Request</small></p>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <div class="badge bg-success p-2 mb-2 w-100">review</div>
+                                        <p><small>Code Review</small></p>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <div class="badge bg-primary p-2 mb-2 w-100">merge</div>
+                                        <p><small>Merge & Deploy</small></p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <h4>Mejores Prácticas:</h4>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h6>✅ Buenas Prácticas:</h6>
+                                    <ul>
+                                        <li>Nombres descriptivos para ramas</li>
+                                        <li>Commits pequeños y frecuentes</li>
+                                        <li>Mensajes de commit claros</li>
+                                        <li>Testing antes de merge</li>
+                                        <li>Code review obligatorio</li>
+                                    </ul>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6>❌ Evitar:</h6>
+                                    <ul>
+                                        <li>Commits gigantes</li>
+                                        <li>Trabajar directamente en main</li>
+                                        <li>Forzar push en ramas compartidas</li>
+                                        <li>Merge sin testing</li>
+                                        <li>Ignorar conflictos</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sección Final: Resumen -->
+                    <div class="concept-card">
+                        <div class="concept-header" style="background: linear-gradient(45deg, #667eea, #764ba2);">
+                            <h2><i class="fas fa-graduation-cap"></i> ¡Felicitaciones!</h2>
+                            <p class="mb-0">Has completado la guía de Git Adventure Nivel 2</p>
+                        </div>
+                        <div class="card-body text-center">
+                            <h4>Conceptos Dominados:</h4>
+                            <div class="row mt-4">
+                                <div class="col-md-4 mb-3">
+                                    <div class="badge bg-success p-3 w-100">
+                                        <i class="fas fa-code-branch fa-2x d-block mb-2"></i>
+                                        <strong>Branching Master</strong>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <div class="badge bg-primary p-3 w-100">
+                                        <i class="fas fa-code-merge fa-2x d-block mb-2"></i>
+                                        <strong>Merge Expert</strong>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <div class="badge bg-warning p-3 w-100">
+                                        <i class="fas fa-users fa-2x d-block mb-2"></i>
+                                        <strong>Collaboration Pro</strong>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="mt-4">
+                                <h5>Próximos Pasos:</h5>
+                                <p>Ahora estás listo para trabajar en proyectos colaborativos reales y usar Git de manera profesional. ¡Sigue practicando y explorando características avanzadas!</p>
+                            </div>
+
+                            <div class="tip-box mt-4">
+                                <strong><i class="fas fa-bookmark"></i> Marca esta página</strong> como referencia para consultar comandos y conceptos cuando los necesites en proyectos reales.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+    
+    <script>
+        // Función para copiar comandos al portapapeles
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(function() {
+                // Mostrar feedback visual
+                showCopyFeedback();
+            }, function(err) {
+                console.error('Error al copiar: ', err);
+            });
+        }
+
+        function showCopyFeedback() {
+            // Crear un elemento de feedback temporal
+            const feedback = document.createElement('div');
+            feedback.innerHTML = '<i class="fas fa-check"></i> ¡Copiado!';
+            feedback.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: linear-gradient(45deg, #56ab2f, #a8e6cf);
+                color: white;
+                padding: 10px 20px;
+                border-radius: 25px;
+                font-weight: bold;
+                z-index: 9999;
+                animation: slideIn 0.3s ease-out;
+            `;
+            
+            document.body.appendChild(feedback);
+            
+            // Remover después de 2 segundos
+            setTimeout(() => {
+                feedback.style.animation = 'slideOut 0.3s ease-in forwards';
+                setTimeout(() => {
+                    document.body.removeChild(feedback);
+                }, 300);
+            }, 2000);
+        }
+
+        // Añadir animaciones CSS
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideIn {
+                from { transform: translateX(100%); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+            @keyframes slideOut {
+                from { transform: translateX(0); opacity: 1; }
+                to { transform: translateX(100%); opacity: 0; }
+            }
+        `;
+        document.head.appendChild(style);
+
+        // Smooth scrolling para los enlaces del sidebar
+        document.querySelectorAll('.sidebar-link').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const targetId = this.getAttribute('href').substring(1);
+                const targetElement = document.getElementById(targetId);
+                
+                if (targetElement) {
+                    targetElement.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                    
+                    // Actualizar el enlace activo
+                    document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active'));
+                    this.classList.add('active');
+                }
+            });
+        });
+
+        // Actualizar progreso basado en scroll
+        window.addEventListener('scroll', function() {
+            const sections = document.querySelectorAll('.concept-card');
+            const progressSteps = document.querySelectorAll('.progress-circle');
+            
+            sections.forEach((section, index) => {
+                const rect = section.getBoundingClientRect();
+                const isVisible = rect.top <= window.innerHeight / 2 && rect.bottom >= window.innerHeight / 2;
+                
+                if (isVisible && progressSteps[index]) {
+                    // Marcar pasos anteriores como completados
+                    for (let i = 0; i <= index; i++) {
+                        if (progressSteps[i]) {
+                            progressSteps[i].classList.remove('current');
+                            progressSteps[i].classList.add('completed');
+                        }
+                    }
+                    
+                    // Marcar el actual
+                    if (progressSteps[index + 1]) {
+                        progressSteps[index + 1].classList.add('current');
+                    }
+                }
+            });
+        });
+
+        // Inicializar tooltips de Bootstrap
+        document.addEventListener('DOMContentLoaded', function() {
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+        });
+
+        // Añadir efecto de highlight a las secciones cuando se hace clic en el sidebar
+        function highlightSection(sectionId) {
+            const section = document.getElementById(sectionId);
+            if (section) {
+                section.style.animation = 'highlight 1s ease-out';
+                setTimeout(() => {
+                    section.style.animation = '';
+                }, 1000);
+            }
+        }
+
+        // Añadir la animación de highlight
+        const highlightStyle = document.createElement('style');
+        highlightStyle.textContent = `
+            @keyframes highlight {
+                0% { box-shadow: 0 0 0 0 rgba(102, 126, 234, 0.4); }
+                70% { box-shadow: 0 0 0 20px rgba(102, 126, 234, 0); }
+                100% { box-shadow: 0 0 0 0 rgba(102, 126, 234, 0); }
+            }
+        `;
+        document.head.appendChild(highlightStyle);
+
+        // Mejorar la experiencia del sidebar
+        document.querySelectorAll('.sidebar-link').forEach(link => {
+            link.addEventListener('click', function() {
+                const sectionId = this.getAttribute('href').substring(1);
+                highlightSection(sectionId);
+            });
+        });
+    </script>
+</body>
+</html>
